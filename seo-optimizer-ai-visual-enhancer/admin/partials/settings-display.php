@@ -94,7 +94,7 @@
                 <tr>
                     <th scope="row">Personnalisation du prompt</th>
                     <td>
-                        <textarea name="custom_prompt_template" rows="5" class="large-text code"><?php echo esc_textarea(get_option('seoai_settings')['custom_prompt_template'] ?? "Optimise cet article WordPress pour le SEO. Titre: {{title}}\n\nContenu: {{content}}\n\nGénère également 3 prompts pour créer des images pertinentes pour cet article."); ?></textarea>
+                        <textarea name="custom_prompt_template" rows="5" class="large-text code"><?php echo esc_textarea(get_option('seoai_settings')['custom_prompt_template'] ?? "Titre: {{title}}\n\nContenu: {{content}}"); ?></textarea>
                         <p class="description">Personnalisez le prompt envoyé à l'IA. Utilisez {{title}} et {{content}} comme variables.</p>
                     </td>
                 </tr>

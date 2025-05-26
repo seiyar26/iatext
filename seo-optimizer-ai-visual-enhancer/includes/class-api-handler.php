@@ -50,8 +50,15 @@ class SEOAI_API_Handler {
             return new WP_Error('no_api_key', 'Clé API Gemini manquante');
         }
         
-        // Préparation du prompt
-        $prompt = "Titre: $title\n\nContenu: $content";
+        // Récupération du template de prompt personnalisé depuis les paramètres
+        $prompt_template = isset($this->settings['custom_prompt_template']) ? $this->settings['custom_prompt_template'] : "Titre: {{title}}\n\nContenu: {{content}}";
+        
+        // Remplacement des variables dans le template
+        $prompt = str_replace(
+            array('{{title}}', '{{content}}'),
+            array($title, $content),
+            $prompt_template
+        );
         
         // Journaliser les informations de la requête
         $this->logger->write_log("=== DÉBUT REQUÊTE GEMINI (modèle: $model) ===", 'INFO');
