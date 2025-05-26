@@ -223,6 +223,13 @@ class SEOAI_API_Handler {
      * @param array $settings Paramètres optionnels pour la génération d'images
      * @return array|WP_Error Liste des URLs des images générées ou objet d'erreur
      */
+    /**
+     * Génère des images à partir de prompts en utilisant Google Imagen 4 via Replicate
+     * 
+     * @param array $prompts Liste des prompts pour générer des images
+     * @param array $settings Paramètres optionnels
+     * @return array|WP_Error Images générées ou erreur
+     */
     public function generate_images($prompts, $settings = null) {
         if (!$settings) {
             $settings = $this->settings;
@@ -235,8 +242,14 @@ class SEOAI_API_Handler {
             return new WP_Error('no_api_key', 'Clé API Replicate manquante');
         }
         
-        // Modèle à utiliser (par défaut: Stable Diffusion XL)
-        $model = isset($settings['image_model']) ? $settings['image_model'] : 'stability-ai/stable-diffusion-xl-base-1.0';
+        // Modèle à utiliser (par défaut: Google Imagen 4)
+        $model = isset($settings['image_model']) ? $settings['image_model'] : 'google/imagen-4';
+        
+        // Format d'aspect pour Imagen 4
+        $aspect_ratio = isset($settings['aspect_ratio']) ? $settings['aspect_ratio'] : '16:9';
+        
+        // Niveau de filtre de sécurité pour Imagen 4
+        $safety_filter = isset($settings['safety_filter_level']) ? $settings['safety_filter_level'] : 'block_medium_and_above';
         
         $this->logger->write_log("=== DÉBUT GÉNÉRATION D'IMAGES (modèle: $model) ===", 'INFO');
         $this->logger->write_log("Nombre de prompts: " . count($prompts), 'DEBUG');
@@ -245,47 +258,62 @@ class SEOAI_API_Handler {
         
         foreach ($prompts as $index => $prompt) {
             // Vérifier si l'image est déjà en cache
-            $cache_key = md5($prompt . $model);
+            $cache_key = md5($prompt . $model . $aspect_ratio);
             if (isset($this->cache[$cache_key])) {
                 $this->logger->write_log("Image trouvée en cache pour le prompt: " . substr($prompt, 0, 50) . "...", 'DEBUG');
                 $image_urls[] = $this->cache[$cache_key];
                 continue;
             }
             
-            // Préparation des paramètres pour Replicate
-            $data = array(
-                'version' => $this->get_model_version($model),
-                'input' => array(
-                    'prompt' => $prompt,
-                    'width' => 1024,
-                    'height' => 768,
-                    'num_outputs' => 1,
-                    'guidance_scale' => 7.5,
-                    'num_inference_steps' => 50,
-                    'negative_prompt' => 'low quality, blurry, distorted, deformed, disfigured, watermark, signature'
-                )
-            );
+            // Préparation des paramètres selon le modèle
+            if ($model === 'google/imagen-4') {
+                // Configuration pour Google Imagen 4
+                $api_url = 'https://api.replicate.com/v1/models/google/imagen-4/predictions';
+                $data = array(
+                    'input' => array(
+                        'prompt' => $prompt,
+                        'aspect_ratio' => $aspect_ratio,
+                        'safety_filter_level' => $safety_filter
+                    )
+                );
+                $auth_header = 'Bearer ' . $replicate_api_key;
+            } else {
+                // Configuration pour les autres modèles (comme Stable Diffusion)
+                $api_url = 'https://api.replicate.com/v1/predictions';
+                $data = array(
+                    'version' => $this->get_model_version($model),
+                    'input' => array(
+                        'prompt' => $prompt,
+                        'width' => 1024,
+                        'height' => 768,
+                        'num_outputs' => 1,
+                        'guidance_scale' => 7.5,
+                        'num_inference_steps' => 50,
+                        'negative_prompt' => 'low quality, blurry, distorted, deformed, disfigured, watermark, signature'
+                    )
+                );
+                $auth_header = 'Token ' . $replicate_api_key;
+            }
             
             // Convertir en JSON
             $request_json = json_encode($data);
             
             // Log de la requête
             $this->logger->write_log("GÉNÉRATION IMAGE #" . ($index + 1) . ": " . substr($prompt, 0, 100) . (strlen($prompt) > 100 ? '...' : ''), 'DEBUG');
-            
-            // Construire l'URL de l'API
-            $url = "https://api.replicate.com/v1/predictions";
+            $this->logger->write_log("Modèle utilisé: " . $model . ", Format: " . ($model === 'google/imagen-4' ? $aspect_ratio : '1024x768'), 'DEBUG');
             
             // Enregistrer le temps de début
             $start_time = microtime(true);
             
             // Envoyer la requête pour démarrer la prédiction
-            $response = wp_remote_post($url, array(
+            $response = wp_remote_post($api_url, array(
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'Authorization' => 'Token ' . $replicate_api_key
+                    'Authorization' => $auth_header,
+                    'Prefer' => 'wait' // Essayer d'attendre la réponse complète
                 ),
                 'body' => $request_json,
-                'timeout' => 30
+                'timeout' => 120 // Timeout plus long pour Imagen 4
             ));
             
             // Gestion des erreurs de connexion

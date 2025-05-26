@@ -143,36 +143,83 @@ class SEOAI_Content_Processor {
         return $uploaded_images;
     }
     
+    /**
+     * Restructure le contenu en intégrant les images générées
+     * 
+     * @param string $content Contenu optimisé
+     * @param array $images Images générées
+     * @return string Contenu restructuré avec images
+     */
     private function restructure_content_with_images($content, $images) {
+        // Diviser le contenu en paragraphes
         $paragraphs = explode("\n", $content);
         $paragraphs = array_filter($paragraphs, function($p) { return !empty(trim($p)); });
+        $paragraphs = array_values($paragraphs); // Réindexer le tableau
         
+        // Commencer l'article avec la classe optimisée
         $new_content = '<article class="seoai-optimized-content">';
+        
+        // Créer une section unique pour tout le contenu principal
+        $new_content .= '<section class="content-section fade-in visible">';
         
         $paragraph_count = count($paragraphs);
         $image_index = 0;
+        $image_positions = array();
         
+        // Récupérer les paramètres pour les positions d'images
+        $settings = get_option('seoai_settings', array());
+        $image_positions_setting = isset($settings['image_positions']) ? $settings['image_positions'] : array('after_first_paragraph', 'middle', 'conclusion');
+        
+        // Déterminer les positions d'insertion des images
+        if (in_array('after_first_paragraph', $image_positions_setting) && $paragraph_count > 1) {
+            $image_positions[] = 0; // Après le premier paragraphe
+        }
+        if (in_array('middle', $image_positions_setting) && $paragraph_count > 2) {
+            $image_positions[] = floor($paragraph_count / 2); // Au milieu
+        }
+        if (in_array('conclusion', $image_positions_setting)) {
+            $image_positions[] = $paragraph_count - 1; // À la fin
+        }
+        
+        // Ajouter les paragraphes et insérer les images aux positions stratégiques
         foreach ($paragraphs as $index => $paragraph) {
-            $new_content .= '<section class="content-section">';
-            $new_content .= '<p>' . $paragraph . '</p>';
-            $new_content .= '</section>';
+            $paragraph = trim($paragraph);
+            
+            // Vérifier si le paragraphe est un titre (commence par # ou ##)
+            if (preg_match('/^#+\s+(.+)$/i', $paragraph, $matches)) {
+                $heading_level = substr_count(trim($paragraph), '#');
+                $heading_text = $matches[1];
+                
+                // Limiter le niveau de titre entre h2 et h4
+                $heading_level = min(max($heading_level, 2), 4);
+                
+                $new_content .= "<h{$heading_level}>{$heading_text}</h{$heading_level}>";
+            } else {
+                // Paragraphe normal
+                $new_content .= '<p>' . $paragraph . '</p>';
+            }
             
             // Insérer les images aux positions stratégiques
-            if ($image_index < count($images)) {
-                if (($index === 0 && $paragraph_count > 1) || // Après le premier paragraphe
-                    ($index === floor($paragraph_count / 2)) || // Au milieu
-                    ($index === $paragraph_count - 1)) { // À la fin
-                    
-                    $image = $images[$image_index];
-                    $new_content .= '<figure class="seoai-generated-image">';
-                    $new_content .= '<img src="' . esc_url($image['url']) . '" alt="Image générée par IA" loading="lazy" />';
-                    $new_content .= '</figure>';
-                    
-                    $image_index++;
+            if ($image_index < count($images) && in_array($index, $image_positions)) {
+                $image = $images[$image_index];
+                
+                // Créer la figure avec l'image
+                $new_content .= '<figure class="seoai-generated-image">';
+                $new_content .= '<img src="' . esc_url($image['url']) . '" alt="' . esc_attr(isset($image['alt']) ? $image['alt'] : 'Image générée par IA') . '" loading="lazy" decoding="async" />';
+                
+                // Ajouter une légende si disponible
+                if (!empty($image['caption'])) {
+                    $new_content .= '<figcaption>' . esc_html($image['caption']) . '</figcaption>';
                 }
+                
+                $new_content .= '</figure>';
+                
+                $image_index++;
             }
         }
         
+        // Fermer la section et l'article
+        $new_content .= '</section>';
         $new_content .= '</article>';
         
         return $new_content;
