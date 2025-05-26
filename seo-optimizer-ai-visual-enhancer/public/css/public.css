@@ -1,36 +1,214 @@
+/**
+ * Styles publics pour SEO Optimizer & AI Visual Enhancer
+ * Améliore l'apparence du contenu optimisé et des images générées par l'IA
+ */
+
+:root {
+    --seoai-primary-color: #2271b1;
+    --seoai-secondary-color: #3858e9;
+    --seoai-text-color: #333;
+    --seoai-light-bg: #f8f9fa;
+    --seoai-border-radius: 8px;
+    --seoai-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --seoai-transition: all 0.3s ease;
+}
+
+/* Conteneur principal */
 .seoai-optimized-content {
     max-width: 800px;
     margin: 0 auto;
     line-height: 1.6;
+    font-size: 1.1em;
+    color: var(--seoai-text-color);
+    padding: 1em 0;
 }
 
+/* Sections de contenu */
 .content-section {
-    margin-bottom: 1.5em;
+    margin-bottom: 1.8em;
+    position: relative;
 }
 
 .content-section p {
-    margin-bottom: 1em;
-    text-align: justify;
+    margin-bottom: 1.2em;
+    line-height: 1.7;
 }
 
+/* Titres dans le contenu optimisé */
+.seoai-optimized-content h2 {
+    font-size: 1.8em;
+    margin: 1.5em 0 0.8em;
+    color: var(--seoai-primary-color);
+    border-bottom: 2px solid rgba(34, 113, 177, 0.2);
+    padding-bottom: 0.3em;
+}
+
+.seoai-optimized-content h3 {
+    font-size: 1.4em;
+    margin: 1.2em 0 0.6em;
+    color: var(--seoai-primary-color);
+}
+
+/* Listes dans le contenu optimisé */
+.seoai-optimized-content ul, 
+.seoai-optimized-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.seoai-optimized-content li {
+    margin-bottom: 0.5em;
+}
+
+/* Images générées par l'IA */
 .seoai-generated-image {
-    margin: 2em 0;
+    margin: 2.5em auto;
     text-align: center;
+    max-width: 90%;
+    position: relative;
 }
 
 .seoai-generated-image img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: var(--seoai-border-radius);
+    box-shadow: var(--seoai-box-shadow);
+    transition: var(--seoai-transition);
 }
 
+.seoai-generated-image img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge IA pour les images générées */
+.seoai-generated-image::after {
+    content: "IA";
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(34, 113, 177, 0.8);
+    color: white;
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    opacity: 0.8;
+    transition: var(--seoai-transition);
+}
+
+.seoai-generated-image:hover::after {
+    opacity: 1;
+}
+
+/* Citations et blocs de mise en évidence */
+.seoai-optimized-content blockquote {
+    border-left: 4px solid var(--seoai-primary-color);
+    padding: 1em 1.5em;
+    margin: 1.5em 0;
+    background: var(--seoai-light-bg);
+    border-radius: 0 var(--seoai-border-radius) var(--seoai-border-radius) 0;
+    font-style: italic;
+}
+
+/* Mise en évidence des termes importants */
+.seoai-optimized-content .highlight {
+    background: linear-gradient(transparent 60%, rgba(56, 88, 233, 0.2) 40%);
+    padding: 0 2px;
+}
+
+/* Tableaux dans le contenu optimisé */
+.seoai-optimized-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    overflow: hidden;
+    border-radius: var(--seoai-border-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.seoai-optimized-content th {
+    background-color: var(--seoai-primary-color);
+    color: white;
+    font-weight: bold;
+    padding: 0.8em;
+    text-align: left;
+}
+
+.seoai-optimized-content td {
+    padding: 0.8em;
+    border-bottom: 1px solid #eee;
+}
+
+.seoai-optimized-content tr:nth-child(even) {
+    background-color: var(--seoai-light-bg);
+}
+
+/* Animation de chargement pour les images */
+.seoai-generated-image img.loading {
+    filter: blur(5px);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .seoai-optimized-content {
         padding: 0 15px;
+        font-size: 1em;
     }
     
     .seoai-generated-image {
-        margin: 1.5em 0;
+        margin: 1.5em auto;
+        max-width: 100%;
+    }
+    
+    .seoai-optimized-content h2 {
+        font-size: 1.5em;
+    }
+    
+    .seoai-optimized-content h3 {
+        font-size: 1.3em;
+    }
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+    .seoai-optimized-content {
+        color: #e0e0e0;
+    }
+    
+    .seoai-optimized-content h2,
+    .seoai-optimized-content h3 {
+        color: #4d9be6;
+    }
+    
+    .seoai-optimized-content blockquote {
+        background: rgba(34, 113, 177, 0.1);
+        border-left-color: #4d9be6;
+    }
+    
+    .seoai-generated-image img {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .seoai-optimized-content .highlight {
+        background: linear-gradient(transparent 60%, rgba(77, 155, 230, 0.3) 40%);
+    }
+    
+    .seoai-optimized-content table th {
+        background-color: #4d9be6;
+    }
+    
+    .seoai-optimized-content tr:nth-child(even) {
+        background-color: rgba(248, 249, 250, 0.05);
+    }
+    
+    .seoai-optimized-content td {
+        border-bottom-color: #333;
     }
 }

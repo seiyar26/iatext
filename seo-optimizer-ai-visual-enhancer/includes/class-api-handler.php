@@ -4,14 +4,21 @@ class SEOAI_API_Handler {
     
     private $logger;
     private $settings;
+    private $cache;
     
     public function __construct() {
         $this->logger = SEOAI_Logger::get_instance();
         $this->settings = get_option('seoai_settings', array());
+        $this->cache = array();
         
         // Initialiser les paramètres par défaut si nécessaire
         if (!isset($this->settings['gemini_model'])) {
             $this->settings['gemini_model'] = 'gemini-2.0-flash';
+        }
+        
+        // Initialiser les paramètres de génération d'images par défaut
+        if (!isset($this->settings['image_model'])) {
+            $this->settings['image_model'] = 'stability-ai/stable-diffusion-xl-base-1.0';
         }
     }
     
@@ -207,5 +214,190 @@ class SEOAI_API_Handler {
         }
         
         return $result;
+    }
+    
+    /**
+     * Génère des images à partir de prompts en utilisant l'API Replicate
+     * 
+     * @param array $prompts Liste des prompts pour générer des images
+     * @param array $settings Paramètres optionnels pour la génération d'images
+     * @return array|WP_Error Liste des URLs des images générées ou objet d'erreur
+     */
+    public function generate_images($prompts, $settings = null) {
+        if (!$settings) {
+            $settings = $this->settings;
+        }
+        
+        // Récupérer la clé API Replicate
+        $replicate_api_key = isset($settings['replicate_api_key']) ? $settings['replicate_api_key'] : '';
+        
+        if (empty($replicate_api_key)) {
+            return new WP_Error('no_api_key', 'Clé API Replicate manquante');
+        }
+        
+        // Modèle à utiliser (par défaut: Stable Diffusion XL)
+        $model = isset($settings['image_model']) ? $settings['image_model'] : 'stability-ai/stable-diffusion-xl-base-1.0';
+        
+        $this->logger->write_log("=== DÉBUT GÉNÉRATION D'IMAGES (modèle: $model) ===", 'INFO');
+        $this->logger->write_log("Nombre de prompts: " . count($prompts), 'DEBUG');
+        
+        $image_urls = array();
+        
+        foreach ($prompts as $index => $prompt) {
+            // Vérifier si l'image est déjà en cache
+            $cache_key = md5($prompt . $model);
+            if (isset($this->cache[$cache_key])) {
+                $this->logger->write_log("Image trouvée en cache pour le prompt: " . substr($prompt, 0, 50) . "...", 'DEBUG');
+                $image_urls[] = $this->cache[$cache_key];
+                continue;
+            }
+            
+            // Préparation des paramètres pour Replicate
+            $data = array(
+                'version' => $this->get_model_version($model),
+                'input' => array(
+                    'prompt' => $prompt,
+                    'width' => 1024,
+                    'height' => 768,
+                    'num_outputs' => 1,
+                    'guidance_scale' => 7.5,
+                    'num_inference_steps' => 50,
+                    'negative_prompt' => 'low quality, blurry, distorted, deformed, disfigured, watermark, signature'
+                )
+            );
+            
+            // Convertir en JSON
+            $request_json = json_encode($data);
+            
+            // Log de la requête
+            $this->logger->write_log("GÉNÉRATION IMAGE #" . ($index + 1) . ": " . substr($prompt, 0, 100) . (strlen($prompt) > 100 ? '...' : ''), 'DEBUG');
+            
+            // Construire l'URL de l'API
+            $url = "https://api.replicate.com/v1/predictions";
+            
+            // Enregistrer le temps de début
+            $start_time = microtime(true);
+            
+            // Envoyer la requête pour démarrer la prédiction
+            $response = wp_remote_post($url, array(
+                'headers' => array(
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Token ' . $replicate_api_key
+                ),
+                'body' => $request_json,
+                'timeout' => 30
+            ));
+            
+            // Gestion des erreurs de connexion
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                $this->logger->write_log("=== ERREUR DE CONNEXION REPLICATE ===", 'ERROR');
+                $this->logger->write_log("Détail de l'erreur WP: $error_message", 'ERROR');
+                continue;
+            }
+            
+            // Traitement de la réponse initiale
+            $status_code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+            
+            if ($status_code < 200 || $status_code >= 300) {
+                $this->logger->write_log("Erreur HTTP $status_code lors de la création de la prédiction", 'ERROR');
+                continue;
+            }
+            
+            $prediction_data = json_decode($body, true);
+            
+            if (!isset($prediction_data['id'])) {
+                $this->logger->write_log("ID de prédiction non trouvé dans la réponse", 'ERROR');
+                continue;
+            }
+            
+            $prediction_id = $prediction_data['id'];
+            $this->logger->write_log("Prédiction créée avec ID: $prediction_id", 'DEBUG');
+            
+            // Attendre que la prédiction soit terminée
+            $max_attempts = 30; // 5 minutes maximum (10 secondes * 30)
+            $attempts = 0;
+            $prediction_url = "https://api.replicate.com/v1/predictions/{$prediction_id}";
+            
+            while ($attempts < $max_attempts) {
+                $attempts++;
+                
+                // Attendre 10 secondes entre chaque vérification
+                sleep(10);
+                
+                // Vérifier l'état de la prédiction
+                $status_response = wp_remote_get($prediction_url, array(
+                    'headers' => array(
+                        'Authorization' => 'Token ' . $replicate_api_key
+                    ),
+                    'timeout' => 15
+                ));
+                
+                if (is_wp_error($status_response)) {
+                    $this->logger->write_log("Erreur lors de la vérification de l'état: " . $status_response->get_error_message(), 'ERROR');
+                    continue 2; // Passer au prompt suivant
+                }
+                
+                $status_body = wp_remote_retrieve_body($status_response);
+                $status_data = json_decode($status_body, true);
+                
+                if (isset($status_data['status'])) {
+                    $this->logger->write_log("État de la prédiction: " . $status_data['status'], 'DEBUG');
+                    
+                    if ($status_data['status'] === 'succeeded') {
+                        // La prédiction est terminée
+                        if (isset($status_data['output']) && is_array($status_data['output']) && !empty($status_data['output'])) {
+                            $image_url = $status_data['output'][0]; // Premier résultat
+                            $image_urls[] = $image_url;
+                            
+                            // Mettre en cache le résultat
+                            $this->cache[$cache_key] = $image_url;
+                            
+                            $this->logger->write_log("Image générée avec succès: " . $image_url, 'SUCCESS');
+                            break;
+                        } else {
+                            $this->logger->write_log("Aucune image dans la sortie de la prédiction", 'ERROR');
+                            break;
+                        }
+                    } elseif ($status_data['status'] === 'failed') {
+                        $error = isset($status_data['error']) ? $status_data['error'] : 'Raison inconnue';
+                        $this->logger->write_log("La prédiction a échoué: " . $error, 'ERROR');
+                        break;
+                    }
+                    // Sinon, continuer à attendre
+                }
+            }
+            
+            if ($attempts >= $max_attempts) {
+                $this->logger->write_log("Délai d'attente dépassé pour la prédiction", 'ERROR');
+            }
+            
+            // Calculer le temps de génération
+            $end_time = microtime(true);
+            $duration = round($end_time - $start_time, 2);
+            $this->logger->write_log("Temps de génération d'image: {$duration} secondes", 'PERFORMANCE');
+        }
+        
+        $this->logger->write_log("=== FIN GÉNÉRATION D'IMAGES ===", 'INFO');
+        $this->logger->write_log("Images générées: " . count($image_urls) . "/" . count($prompts), 'INFO');
+        
+        return $image_urls;
+    }
+    
+    /**
+     * Obtient la version correcte du modèle Replicate
+     * 
+     * @param string $model_name Nom du modèle
+     * @return string Version du modèle
+     */
+    private function get_model_version($model_name) {
+        $versions = array(
+            'stability-ai/stable-diffusion-xl-base-1.0' => 'be04660a5b93ef2aff61e3668dedb4cbeb14941e62a3fd5998364a32d613e35e',
+            'stability-ai/sdxl' => '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
+            'midjourney/midjourney-diffusion' => '436b051ebd8f68d23e83d22de5e198e0995357afef113768c20f0b6fcef23c8b'
+        );
+        
+        return isset($versions[$model_name]) ? $versions[$model_name] : $versions['stability-ai/stable-diffusion-xl-base-1.0'];
     }
 }
