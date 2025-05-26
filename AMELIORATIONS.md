@@ -63,13 +63,14 @@ Le processus d'optimisation du contenu reste le même, mais avec des résultats 
 3. Le plugin analysera le contenu, l'optimisera pour le SEO et générera des images pertinentes
 4. Les images seront désormais insérées de manière plus stratégique dans le contenu
 
-### Utilisation du prompt SEO optimisé
+### Personnalisation du prompt SEO
 
-Un nouveau prompt SEO optimisé a été créé pour améliorer la qualité du contenu généré. Pour l'utiliser :
+Le prompt SEO est maintenant configurable directement dans les paramètres du plugin :
 
-1. Copiez le contenu du fichier `prompt-seo-optimise.txt`
-2. Utilisez-le comme base pour vos requêtes d'optimisation de contenu
-3. Personnalisez-le selon vos besoins spécifiques
+1. Accédez à la section "IA Textuelle" dans les paramètres du plugin
+2. Trouvez le champ "Personnalisation du prompt"
+3. Modifiez le prompt selon vos besoins en utilisant les variables {{title}} et {{content}}
+4. Enregistrez les modifications pour qu'elles soient prises en compte lors des prochaines optimisations
 
 ## Prochaines étapes
 
@@ -77,3 +78,4 @@ Un nouveau prompt SEO optimisé a été créé pour améliorer la qualité du co
 - Amélioration de la documentation utilisateur
 - Support pour d'autres modèles d'IA
 - Intégration avec d'autres outils SEO populaires
+- Ajout d'options avancées pour la personnalisation des prompts
