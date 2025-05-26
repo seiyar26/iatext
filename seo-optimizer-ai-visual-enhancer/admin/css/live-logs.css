@@ -1,0 +1,176 @@
+/* Styles pour les logs en direct */
+.seoai-live-logs-container {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+}
+
+.seoai-live-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.seoai-live-logs-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.seoai-live-logs-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.seoai-live-logs-wrapper {
+    height: 500px;
+    overflow-y: auto;
+    background: #f6f7f7;
+    border: 1px solid #ddd;
+    margin: 10px;
+    padding: 0;
+    position: relative;
+}
+
+.seoai-logs-pre {
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 10px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #333;
+    background: transparent;
+}
+
+#seoai-live-logs-content {
+    min-height: 100%;
+    width: 100%;
+}
+
+.seoai-live-logs-status {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #ccd0d4;
+}
+
+#seoai-live-logs-stats {
+    display: flex;
+    gap: 15px;
+    padding: 5px 15px;
+    background: #f8f8f8;
+    border-bottom: 1px solid #ddd;
+}
+
+.seoai-log-stat {
+    font-size: 12px;
+    color: #555;
+}
+
+.info-count {
+    color: #0073aa;
+}
+
+.debug-count {
+    color: #555;
+}
+
+.success-count {
+    color: #46b450;
+}
+
+.warning-count {
+    color: #ffb900;
+}
+
+.error-count {
+    color: #dc3232;
+}
+
+#seoai-log-filter {
+    width: 200px;
+}
+
+/* Styles pour les entrées de log */
+.log-entry {
+    padding: 3px 5px;
+    margin: 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.log-entry:hover {
+    background-color: #f9f9f9;
+}
+
+.log-entry.INFO {
+    border-left: 3px solid #0073aa;
+}
+
+.log-entry.DEBUG {
+    border-left: 3px solid #555;
+    color: #555;
+}
+
+.log-entry.SUCCESS {
+    border-left: 3px solid #46b450;
+    color: #2a6f2a;
+}
+
+.log-entry.WARNING {
+    border-left: 3px solid #ffb900;
+    color: #a36200;
+}
+
+.log-entry.ERROR {
+    border-left: 3px solid #dc3232;
+    color: #a00;
+    font-weight: 500;
+}
+
+.log-entry.API_REQUEST,
+.log-entry.API_RESPONSE {
+    font-family: Consolas, Monaco, monospace;
+    background: #f0f8ff;
+}
+
+.log-entry.highlight {
+    background-color: #fffde7;
+    animation: highlight-fade 2s forwards;
+}
+
+@keyframes highlight-fade {
+    0% { background-color: #fffde7; }
+    100% { background-color: transparent; }
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .seoai-live-logs-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .seoai-live-logs-controls {
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    
+    #seoai-log-filter {
+        width: 100%;
+        margin-top: 5px;
+    }
+    
+    .seoai-live-logs-wrapper {
+        height: 400px;
+    }
+}

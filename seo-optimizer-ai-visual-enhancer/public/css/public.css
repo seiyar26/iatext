@@ -1,0 +1,36 @@
+.seoai-optimized-content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.content-section {
+    margin-bottom: 1.5em;
+}
+
+.content-section p {
+    margin-bottom: 1em;
+    text-align: justify;
+}
+
+.seoai-generated-image {
+    margin: 2em 0;
+    text-align: center;
+}
+
+.seoai-generated-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .seoai-optimized-content {
+        padding: 0 15px;
+    }
+    
+    .seoai-generated-image {
+        margin: 1.5em 0;
+    }
+}
