@@ -51,7 +51,7 @@ class SEOAI_API_Handler {
         }
         
         // Préparation du prompt
-        $prompt = "Optimise cet article WordPress pour le SEO. Titre: $title\n\nContenu: $content\n\nGénère également 3 prompts pour créer des images pertinentes pour cet article.";
+        $prompt = "Titre: $title\n\nContenu: $content";
         
         // Journaliser les informations de la requête
         $this->logger->write_log("=== DÉBUT REQUÊTE GEMINI (modèle: $model) ===", 'INFO');
@@ -66,7 +66,7 @@ class SEOAI_API_Handler {
                 array(
                     'parts' => array(
                         array(
-                            'text' => "Tu es un expert SEO et rédacteur web. Optimise le contenu pour le référencement naturel et génère des prompts d'images cohérents.\n\n$prompt"
+                            'text' => "Tu es un expert en rédaction web qui va améliorer le contenu de cet article pour le rendre plus engageant, informatif et optimisé pour le référencement naturel. Analyse le sujet principal de l'article et développe-le en profondeur. Utilise une structure claire avec introduction, développement et conclusion. Crée des titres et sous-titres pertinents et accrocheurs. Ajoute des faits, chiffres et exemples concrets pour enrichir le contenu. Rédige dans un style fluide, accessible et engageant. Inclus naturellement les mots-clés pertinents sans bourrage. Termine par une conclusion avec un appel à l'action. Pour les images, suggère 3 descriptions visuelles qui illustreront parfaitement les points clés de l'article. IMPORTANT: Concentre-toi uniquement sur le sujet de l'article. Ne parle pas de SEO, de mots-clés ou d'aspects techniques. Ne mets pas d'astérisques, de crochets ou de commentaires techniques. Écris directement le contenu de l'article comme s'il était destiné à être publié tel quel.\n\n$prompt"
                         )
                     )
                 )
